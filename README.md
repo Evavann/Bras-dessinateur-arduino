@@ -1,3 +1,3 @@
-# Bras robotique qui dessine
+# Bras robotique permettant de dessiner
 
-Projet arduino sur un bras capable de dessiner (1 couleur)
+Projet arduino sur un bras capable de dessiner 
