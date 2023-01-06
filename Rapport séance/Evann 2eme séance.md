@@ -5,7 +5,7 @@
 <p>Le programme permet de varier l angle des servomoteurs de 0° à 180°dans un sens puis dans l autre.</p>
 <p>La prochaine séance sera dédié a la construction du bras pour pouvoir pleinement se lancer dans le programme.</p>
 <img class="fit-picture"
-     src="Bras-dessinateur-arduino/Image/Montage-3-servomoteur-.jpg"
+     src="../Image/Montage 3 servomoteur .jpg"
      alt="Montage ">
 
 
