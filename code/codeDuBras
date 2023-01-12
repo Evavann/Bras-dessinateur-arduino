@@ -32,7 +32,7 @@ void loop()
         poignet.write(position);  // le bras du servomoteur prend la position de la variable position
         delay(15);  // le bras du servomoteur prend la position de la variable position
     }
-   
+ void goTO
  void lever(){ //permet de lever le stylo
   poignet.writeMicroseconds(1500);
   delay(500);  
