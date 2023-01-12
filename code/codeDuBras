@@ -8,9 +8,13 @@ Servo epaule;
 
 void setup()
 {
-    coude.attach(9); // on définit le Pin utilisé par le servomoteur
-    epaule.attach(10);
-    poignet.attach(8);
+//configure les 3 servomoteurs
+    coude.attach(9,0,180); 
+    epaule.attach(10,0,180);
+    poignet.attach(8,0,180);   
+//Position x,y du stilo
+float x, y;
+const float longc= ,longe= ;
 }
 
 void loop()
@@ -28,4 +32,14 @@ void loop()
         poignet.write(position);  // le bras du servomoteur prend la position de la variable position
         delay(15);  // le bras du servomoteur prend la position de la variable position
     }
+   
+ void lever(){ //permet de lever le stylo
+  poignet.writeMicroseconds(1500);
+  delay(500);  
+ }
+
+ void baisser(){//permet de baisser le stylo
+  poignet.writeMicroseconds(1700);
+  delay(500);
+ }
 }
