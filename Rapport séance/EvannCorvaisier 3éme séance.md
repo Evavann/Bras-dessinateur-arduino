@@ -1,5 +1,6 @@
 <h1>3éme séance Evann Corvaisier</h1>
-<p>Au départ nous voulions creer un bras avec les 2 servomoteurs porté par le bois comme le montre la video: 
+</p>Nous sommes arrivés avec l'envie d' avancer fortement sur la fabrication du bras</p>
+<p>Au départ nous voulions créer un bras avec les 2 servomoteurs porté par le bois comme le montre la video: 
 <a href="vidéo montage">https://youtu.be/Ss2v-dr_yWU</a> </p>  
 <p>Mais en reflechissant avec notre professeur nous avons choisis d avoir un servomoteur fixe permetant de bouger le reste pour avoir moins de soucis de poids.</p>
 <p>Nous avons ainsi créer notre bras avec du bois découpé au laser et des vis et écrous pour le fixer au servomoteur.</p>
