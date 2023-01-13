@@ -2,7 +2,7 @@
 <p>Lors de cette séance, nous avons donc décidé de changer, dans un premier temps, légèrement la façon de relier les servomoteurs.</p>
 <p>Nous avons donc à partir de cette vidéo :
 <a href="vidéo montage">https://youtu.be/Ss2v-dr_yWU</a> décidé de relier "l'épaule" au "coude" avec 2 planches de bois sur les côtés de nos servomoteurs ce qui allait faire bouger l'intégralité du servomoteur.</p>  
-<p>Or, en allant au FabLab pour découper de nouvelles planches de bois, j'ai pu faire part au professeur de notre idée, et en discutant nous avons trouvé plusieurs problèmes à notre idée suivant la vidéo, au niveau du fait que ce soit l'intégralité de notre servomteur qui soit en mouvement et non simplement la planche de bois. En effet :</p>
+<p>Or, en allant au FabLab pour découper de nouvelles planches de bois, j'ai pu faire part au professeur de notre idée, et en discutant nous avons trouvé plusieurs problèmes à notre idée suivant la vidéo, au niveau du fait que ce soit l'intégralité de notre servomoteur qui soit en mouvement et non simplement la planche de bois. En effet :</p>
 <ul><li>l'inertie très importante donc aurait eu besoin le servomoteur pour se déplacer nous aurait demandé de fournir trop d'énergie à ce dernier,</li> <li> c'est, effectivement, le poids non négligeable de ce servomoteur qui allait nous poser problème si nous décidions de le faire bouger dans son intégralité.</li></ul>
 <p>Nous avons donc décidé de fixer le servomoteur et de ne faire, uniquement bouger, que la planche de bois placée sur le dessus du servomoteur.</p>
 <p>La majorité de la séance s'est donc, pour ma part, effectuée au FabLab où j'ai réalisé les tâches suivantes :</p>
