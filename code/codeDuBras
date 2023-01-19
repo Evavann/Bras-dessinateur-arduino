@@ -34,12 +34,12 @@ void loop()
     }
  void goTO
  void lever(){ //permet de lever le stylo
-  poignet.writeMicroseconds(1500);
+  poignet.write(1500);
   delay(500);  
  }
 
  void baisser(){//permet de baisser le stylo
-  poignet.writeMicroseconds(1700);
+  poignet.write(1700);
   delay(500);
  }
 }
