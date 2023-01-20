@@ -1,7 +1,7 @@
 <h1>4éme séance Evann Corvaisier</h1>
 </p>Au début de notre séance nous avons présenté notre projet a 3 intervenants.</p>
-<p>Ensuite j'ai pu récuperer le système pour monter et descendre le stilo.</p>
-<p>Celui-ci fonctionne à partir d'un servomoteur S90 permettant de faire monter et descendre le support tenant le feutre.Comme le montre la vidéo ci-dessous: </p>
+<p>Ensuite j'ai pu récupérer notre système précédemment imprimé en 3 dimensions.</p>
+<p>Celui-ci fonctionne à partir d'un servomoteur S90 permettant de faire monter et descendre le support tenant le feutre comme le montre la vidéo ci-dessous: </p>
 <a href="vidéo pen lift">https://youtu.be/Ss2v-dr_yWU](https://youtu.be/tF2mantrnuI</a> </p>  
 <p>Ainsi j ai pu monter notre systeme contenant 2 pièces avec 2 boulons et 2 vis sans tête.</p>
 <img class="fit-picture"
@@ -17,7 +17,7 @@
      src="../Image/code leverbaisser.png"
      alt="code "
      width=40% height=10%>
-<p>Ainsi le stilo pourra descendre et monter.</p>
+<p>Le feutre pourra donc descendre et monter.</p>
 
 
 
