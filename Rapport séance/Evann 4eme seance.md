@@ -17,7 +17,7 @@
      src="../Image/code leverbaisser.png"
      alt="code "
      width=40% height=10%>
-<p>Le feutre pourra donc descendre et monter.</p>
+<p>Le feutre peut donc descendre et monter.</p>
 
 
 
