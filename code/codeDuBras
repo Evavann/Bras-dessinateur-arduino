@@ -1,21 +1,41 @@
 //*****EN-TÊTE DECLARATIF*****
 #include <Servo.h>  // on inclut la bibliothèque pour piloter un servomoteur
-
+#include <math.h>
+// on crée l'objet monServo
 Servo poignet;
 Servo coude;
 Servo epaule;
-// on crée l'objet monServo
+//
+//longueurs en cm de l epaule au coude et du coude au poignet
+const float le=4,5, lc=9,5; 
+//coordonnées du stylo
+float x, y; 
+//Angle de départ de l'épaule et du coude
+float anglE=50;
+float angleC=50;
 
+
+
+//////////////////////////////////////////////////////
 void setup()
 {
 //configure les 3 servomoteurs
     coude.attach(9,0,180); 
     epaule.attach(10,0,180);
-    poignet.attach(8,0,180);   
-//Position x,y du stilo
-float x, y;
-const float longc= ,longe= ;
+    poignet.attach(8,0,180);  
+    Serial.begin(9600);
+
 }
+void lever(){ //permet de lever le stylo
+  poignet.write(80);
+  delay(500);  
+ }
+
+ void baisser(){//permet de baisser le stylo
+  poignet.write(120);
+  delay(500);
+ }
+
 
 void loop()
 {
