@@ -2,8 +2,8 @@
 <p>J ai commencé la séance par réaliser des recherches pour trouver differents programmes sur des cnc plotter<p>
 <p>J ai ainsi trouvé un programme permettant a notre bras d aller a des positions rentré en parametre.<p>
   <img class="fit-picture"
-     src="../Image/Fonction goTo_EvannCharlotte.png"
-     alt="Fonction goTo"
+     src="../Image/prog bras 11.png"
+     alt="Fonction permettant d'aller a des positions preçise."
      width=40% height=10%>
 <p>La suite de la séance a été la plus compliquée. Nous nous sommes mis à deux afin d'enfin tenter de faire dessiner PROPREMENT notre stylo. Ce qui, pour le moment, est encore un échec. En effet, nous avons repris le programme des anciens PEIP2 ayant déjà réalisé un projet similaire au nôtre que nous avons réécrit à notre manière. La seule fonction que nous n'avons pas changé est "goTo", celle permettant de faire aller le stylo à des certaines coordonnées.</p>
 <p>C'est à ce moment-là que les problèmes sont apparus. En effet, nous avons d'abord essayé de faire bouger chaque servomoteur afin de voir si chacun fonctionnait bien indépendamment des autres, puis nous les avons fait bouger ensemble. Tout marchait. Puis lorsque nous avons essayé la fonction goTo (de faire aller le stylo par exemple : de la position (4,0) à (6,0) donc une ligne droite horizontale), cela ne marchait pas et ne nous traçait absolument pas la ligne droite horizontale voulue. Parfois même, rien ne se déclenchait.</p>
