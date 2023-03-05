@@ -1,65 +1,398 @@
-//*****EN-TÊTE DECLARATIF*****
+/****************************
+ * version FINALE CODE 2.8
+****************************/
+
+/****************************
+ * CONVENTIONS UTILISEES
+ * -----------------------
+ * vA         : vecteur A (tableau à 2 ou 3 dimensions selon que c'est un vecteur "dessin" ou le vecteurqui définit la translation 'vTransl')
+ * pRes       : pointeur sur un vecteur résultat
+ * pFonction  : fonction qui renvoie un teableau de valeurs, en l'occurrence un vecteur. On utilise un pointeur vers l'adresse mémoire de ces valeurs, limitation interne au langage C++
+ * Sepaule    : Servo Epaule/Coude/Poignet => désigne un objet qui a des propriétés et des méthodes, voir librairie Servo.h
+****************************/
+
+
+
+
+
+
+
+
 #include <Servo.h>  // on inclut la bibliothèque pour piloter un servomoteur
-#include <math.h>
-// on crée l'objet monServo
-Servo poignet;
-Servo coude;
-Servo epaule;
-//
-//longueurs en cm de l epaule au coude et du coude au poignet
-const float le=4,5, lc=9,5; 
-//coordonnées du stylo
-float x, y; 
-//Angle de départ de l'épaule et du coude
-float anglE=50;
-float angleC=50;
+#include <math.h>   // bibliothèque MATH pour les fonctions trigo
+
+const float pi = M_PI ;
+
+/*****************************
+ * ZONE d'ECRITURE
+*****************************/
+float vTransl[2]                = { 0, 113}  ;    //MODIFIABLE : origine {0,0} du papier par rapport à l'axe de rotation de l'épaule
+const float angleR              = radians(-37.0); //MODIFIABLE 
+const float rapportH            = 10 ;            // pour tracer des lettres visibles, sinon elles ne feront que quelques MM de haut/long, avec 10 les coordonnéees deviennent des "CM"
+// position de départ, pour enlever le bouchon
+const float posRetireBouchon[3] = {10,-150,0} ;   // se déplace jusqu'au bord de la planche, position extrême, permettant de retirer le bouchon => CA MARCHE !!!
+
+/*****************************
+ * DECLARATION DES PARAMETRES PHYSIQUES
+*****************************/
+// paramètres du servo Epaule
+Servo Sepaule  ;                         // déclaration du servo
+const float le = 45   ;                 // longueur du bras (relié à l'épaule)
+const float calibrEpaule  = 1.077844 ;  // si on envoie Sepaule.write(180), le servo se déplace à 167°. 
+                                        // donc conversion de rapport 180/167 à tous les angles pour que l'angle réellement parcouru par l'épaule soit celui demandé.
+const int pinEpaule = 10 ;              // pin de sortie branchement Epaule (fil jaune)
+
+// paramètres du servo Coude
+Servo Scoude ;                           // déclaration du servo
+const float lc = 110  ;                 // longueur de l'avant-bras (relié au coude)
+const float calibrCoude   = 1.046512 ;  // si on envoie Scoude.write(180), le servo se déplace qu'à 172°. 
+                                        // donc conversion de rapport 180/172 à tous les angles pour que l'angle réellement parcouru par le Scoude soit celui demandé.
+const int pinCoude = 9 ;                // pin de sortie branchement Coude (fil jaune)
+
+// paramètres du servo Poignet
+Servo Spoignet ;                         // déclaration du servo            
+const int pinPoignet = 8 ;              // pin de sortie branchement Poignet (fil jaune)
+const int positionBasse = 140 ;         // position basse du stylo en degrés
+const int positionHaute = 110 ;         // position haute du stylo en degrés
+const int delaiLeverBaisser = 500 ;     // delai en mS pour reprendre l'écriture/déplacement après le mouvement du servo POIGNET pour éviter les écritures intempestives
+
+/*****************************
+ * MODE DE FONCTIONNEMENT
+*****************************/
+bool mode = true ;                          // mode = 'true'  : mode permettant de retirer le bouchon en "envoyant le stylo dans le vide" (pour avoir accès au bouchon)
+                                            // mode = 'false' : mode de production, avec écriture
+const int modeRetireBouchonPin  = A0;       // détection du mode par l'entrée analogique A0
+int btnVal  = 0;                            // si A0 est mise à la masse (GND) avec un fil, alors on est en mode permettant de retirer le bouchon
+                                            // REMARQUE IMPORTANTE : on peur se servir de ce fil pour écrire une autre lettre ou plusieurs lettres à la suite, ou faire faire autre chose à l'arduino, en général
 
 
 
-//////////////////////////////////////////////////////
-void setup()
-{
-//configure les 3 servomoteurs
-    coude.attach(9,0,180); 
-    epaule.attach(10,0,180);
-    poignet.attach(8,0,180);  
-    Serial.begin(9600);
+
+
+
+
+
+
+
+void setup() {
+
+  Serial.begin(9600) ;
+
+  // sélection du mode de fonctionnement : mode = true => RetireBouchon / mode = false => ECRITURE (fonctionnement normal, attendu)
+  
+  switch ( quelMode() ) {                     // sélectionne le mode de fonctionnement
+    
+    case true :                             // mode RetireBouchon, permet d'emmener le stylo dans le "vide" pour pouvoir retirer le bouchon
+      retireBouchon() ;
+      break;
+
+    default :
+      compteARebours(2) ;                  // déclenche un compte à rebours d'une durée de x secondes
+      Spoignet.attach(pinPoignet);
+      lever();                              // lève le stylo avant toute action
+      delay(1000) ;
+      Sepaule.attach(pinEpaule);
+      Scoude.attach(pinCoude);
+
+      pinMode(LED_BUILTIN, OUTPUT);digitalWrite(LED_BUILTIN, LOW); // éteint la LED intégrée pour montrer qu'on est en mode NORMAL
+
+
+  // EXEMPLE 1 : TRACER LA LETTRE "É"
+
+  //étape 1 : définir le tableau vLettre --> CHANGE EN FONCTION DE CHAQUE LETTRE QUE L'ON VEUT ÉCRIRE
+  float vLettre[10][3] = {              // modifier la taille du tableau vLettre[nombreDePoints][dimensionsDunVecteur 3 : (x,y,lever/baisser)] en fonction du nombre de points à tracer
+                          {2,0,0},      // déplacement vers le premier point en levant le stylo bougeDeLa
+                          {2,0,1},      // si la troisème coordonnée est un 0, le stylo se lèvera au début du segment suivant
+                          {0,0,1},      // si la troisème coordonnée est un 1, le stylo se baissera au début du segment suivant
+                          {0,1.5,0},
+                          {1.5,1.5,1},
+                          {0,1.5,1},
+                          {0,3,1},
+                          {2,3,0},      
+                          {1,3,1},
+                          {2,4,0}
+                        };  
+
+                          
+  //étape 2 : calculer la taille du tableau vLettre : on divise la taille du tableau par celle du premier élément , quel que soit son type
+  int longVLettre = sizeof(vLettre) / sizeof(vLettre[0]);
+  
+      // définition du point de départ et du point d'arrivée  
+      float vD[3]; 
+      float vF[3];
+
+      Serial.println("mode => ECRITURE") ;
+      //étape 3 : faire un for qui parcourt tout le tableau vLettre
+      for(int n=0 ; n<=longVLettre - 2 ; n++){ 
+          
+        // recopie les coordonnées de la lettre n dans vD et celles de la lettre n+1 dans vF
+        for (int lig = 0; lig<3; lig++){vD[lig] = vLettre[n][lig];    }
+        for (int lig = 0; lig<3; lig++){vF[lig] = vLettre[n+1][lig];  }
+
+        //étape 4 : faire un if qui analyse le troisième élément du tableau vLettre => si il est égal à 1, on utilise la fonction ligne qui permet d'écrire 
+        if(vLettre[n][2] == 1){
+            
+        // commence le tracé de la lettre en lui appliquant les transformations désirées pour la placer correctement
+          ligne(  pTranslation( 
+                                pRotation(
+                                            pHomothetie(
+                                                         vD,
+                                                            rapportH
+                                                                     ),
+                                                                       angleR),
+                                                                               vTransl)
+                ,
+                pTranslation( pRotation(  
+                                          pHomothetie(  
+                                                       vF,
+                                                          rapportH
+                                                                   ),
+                                                                     angleR),
+                                                                             vTransl)
+              ) ;
+        }
+      
+        //puis mettre un else => si c'est pas égal à 1, on utilise la fonction bougeDeLa qui permet juste d'aller au point suivant sans écrire
+        else{
+        bougeDeLa( pTranslation( 
+                                 pRotation(
+                                           pHomothetie(
+                                                       vD,
+                                                          rapportH
+                                                                  ),
+                                                                    angleR),
+                                                                            vTransl)
+                ,
+                pTranslation( pRotation(  
+                                         pHomothetie(  
+                                                     vF,
+                                                        rapportH
+                                                                ),
+                                                                  angleR),
+                                                                          vTransl)
+              ) ;
+        };
+    
+
+
+      } //FIN LETTRE É 
+      lever() ;
+      retireBouchon();
+
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//FONCTIONS
+
+
+/*************************************************************
+FONCTION LEVER --> PERMET DE LEVER LE STYLO : IL N'ÉCRIT PAS
+**************************************************************/
+void lever(){
+      delay(delaiLeverBaisser);                   // delai pour laisse le temps au servo d'agir sur sa dernière action
+      Spoignet.write(positionHaute); 
+      delay(delaiLeverBaisser);                   // delai introduit pour être certain que le servo a eu le temps d'agir avant de déplacer le stylo, sous peine de tracer un trait non désiré
+}
+
+/**********************************************************
+FONCTION BAISSER --> PERMET DE BAISSER LE STYLO : IL ÉCRIT
+***********************************************************/
+void baisser(){
+      delay(delaiLeverBaisser);                    // delai pour laisse le temps au servo d'agir sur sa dernière action
+      Spoignet.write(positionBasse);  
+      delay(delaiLeverBaisser);                    // delai introduit pour être certain que le servo a eu le temps d'agir avant d'écrire avec le stylo, sous peine de ne pas tracer le début d'un trait
+}
+
+/*************************************************************************************************************************************************
+FONCTION RETIREBOUCHON --> PERMET D'EMMENER LE STYLO "DANS LE VIDE" (avec un angle de 180° donné au servo épaule), POUR POUVOIR RETIRER LE BOUCHON
+**************************************************************************************************************************************************/
+void retireBouchon(){
+
+  Spoignet.attach(pinPoignet);
+  lever();                              // lève le stylo avant toute action
+  delay(1000) ;                         // délai qui le temps au poignet de se lever avant le déplacement. On peut sans doute réduire à 500 mS
+  Sepaule.attach(pinEpaule);
+  Scoude.attach(pinCoude);
+
+  // compte à rebours avant de retirer le bouchon
+  compteARebours(1) ;                 // déclenche un compte à rebours d'une durée de x secondes
+  // on fait clignoter 20x la LED intégrée à l'Arduino pour indiquer qu'on est en mode retireBouchon
+  pinMode(LED_BUILTIN, OUTPUT);
+  int compteur = 0 ;
+  while (compteur < 20){
+    digitalWrite(LED_BUILTIN, LOW);   delay(100); // éteint la LED pendant 100 mS
+    digitalWrite(LED_BUILTIN, HIGH);  delay(100); // éclaire la LED pendant 100 mS
+    compteur++ ;
+  }
+  Sepaule.write(0);
+
+  /*float vF[3] ;                        // se déplace jusqu'au bord de la planche, position extrême, permettant de retirer le bouchon => CA MARCHE !!!
+  for (int lig = 0; lig<3; lig++){  vF[lig] = posRetireBouchon[lig];    } ; // initialise le vecteur final vers la position pour retirer le bouchon
+
+  printVector(vF,"posRetireBouchon") ;
+  goTo(vF);*/
+
 
 }
-void lever(){ //permet de lever le stylo
-  poignet.write(80);
-  delay(500);  
- }
 
- void baisser(){//permet de baisser le stylo
-  poignet.write(120);
-  delay(500);
- }
-
-
-void loop()
-{
-    for (int position = 0; position <=180; position ++){ // on crée une variable position qui prend des valeurs entre 0 à 180 degrés
-        coude.write(position);  // le bras du servomoteur prend la position de la variable position
-        epaule.write(position);
-        poignet.write(position);
-        delay(15);  // on attend 15 millisecondes
-    }
-
-    for (int position = 180; position >=0; position --){ // cette fois la variable position passe de 180 à 0°
-        coude.write(position);  // le bras du servomoteur prend la position de la variable position
-        epaule.write(position);
-        poignet.write(position);  // le bras du servomoteur prend la position de la variable position
-        delay(15);  // le bras du servomoteur prend la position de la variable position
-    }
- void goTO
- void lever(){ //permet de lever le stylo
-  poignet.write(1500);
-  delay(500);  
- }
-
- void baisser(){//permet de baisser le stylo
-  poignet.write(1700);
-  delay(500);
- }
+/***************************************************************************************************************************
+FONCTION LIGNE --> PERMET D'ALLER QLQ PART : GOTO()
+               --> AVEC LE STYLO QUI ÉCRIT : BAISSER()
+               --> COMMENCE PAR CALCULER LES POINTS INTERMÉDIAIRES ESPACÉS D'UNE VALEUR FIXE, 1 MM SUR UNE LIGNE DROITE ICI
+****************************************************************************************************************************/
+void ligne(float vDeb[3]  , float vFin[3] ){
+  
+  baisser(); //le stylo écrit 
+  
+  int longLigne =   ( sqrt( (vDeb[0]-vFin[0])*(vDeb[0]-vFin[0]) + (vDeb[1]-vFin[1])*(vDeb[1]-vFin[1]) )); //calcule la longueur de la ligne
+  
+  for(int i=0 ; i<=longLigne ; i += 1){ 
+    float vPointInter [3] = {  (float)i/longLigne *(vFin[0]-vDeb[0]) + vDeb[0],   //calcul des coordonnées d'un point situé à i"%" de la ligne
+                               (float)i/longLigne *(vFin[1]-vDeb[1]) + vDeb[1],  
+                               vDeb[2]  }; //récupère la caleur de LEVER/POSER mais c'est inutile (c'est simplement pour avoir un vecteur de 3 éléments, comme presque partout).
+    
+    goTo(vPointInter); // va à chaque point intermédiaire
+  } // fin du for
 }
+
+/*******************************************************************************************************
+ FONCTION BOUGEDELA --> PERMET D'ALLER QLQ PART : GOTO()
+                    --> AVEC LE STYLO QUI N'ÉCRIT PAS : LEVER()
+    --> permet d'aller à un nouveau point plus rapidement que si je traçais chaque point intermédiaire
+********************************************************************************************************/
+void bougeDeLa(float vDeb[3], float vFin[3]){
+  lever();                                      //le stylo n'écrit pas 
+  goTo(vFin);                                   //le stylo va au point que je veux 
+}
+
+/***********************************************************************
+FONCTION GOTO --> PERMET D'ALLER À UN POINT DESTINATION AVEC LES SERVOS
+************************************************************************/
+void goTo(float vDestination[3]){ 
+  
+  float x1 = vDestination[0];
+  float y1 = vDestination[1];
+  float d=(float) sqrt( sq(x1) + sq(y1) );          //distance correspondant à la racine de la somme des coordonnées(x1,y1) respectivement au carré
+  float Teta = acos((float)x1/d) ;                  //angle entre la position 0 (axe des abscisses, l'épaule est droite) et "d"
+  float angleEint = acos( (float)((sq(le) + sq(d) - sq(lc)) / (  2 * le * d ) ) ) ; //angle 1 d'après le théorème d'Al-Khashi qui permet de calculer angleE (car angleEint = teta - angleE)
+  float angleCint = acos( (float)((sq(le) + sq(lc) - sq(d)) / (  2 * le * lc) ) );  //angle 2 d'après le théorème d'Al-Khashi qui permet de calculer angleC (car angleCint = pi - angleC)
+  float angleE = degrees(Teta - angleEint)  ;       //angleE correspondant à l'angle de l'épaule converti en degrés
+  float angleC = degrees(pi   - angleCint)  ;       //angleC correspondant à l'angle du coude converti en degrés
+  float angleEwrite =   angleE  * calibrEpaule +90 ;// angleEwrite est l'angle envoyé au servo avec une fonction Sepaule.write()
+  float angleCwrite = -(angleC) * calibrCoude  +128;// angleCwrite est l'angle envoyé au servo avec une fonction Scoude.write(), 128 pour refléter le fait que le coude est à 52° ( = 180 - 128 ) du demi-tour
+
+  delay(500) ;                                      // laisse le temps de terminer la dernière instruction d'écriture ou déplacement
+
+  //Convertit en microsecondes (= la durée d'impulsion correspondant à l'angle en degrés) 
+  float angleE_micro = (angleEwrite * 10.3) + 544 ; // angleE_micro est l'angle envoyé au servo avec une fonction Sepaule.writeMicroseconds(). 10.3 est le coefficient correspondant au servo épaule (coeff = (anglemaxMicro-angleminMicro) / (anglemaxDegres-angleminDegres)). 544 est l'offset correspondant au servo épaule (offset = angleminMicro - (coeff * angleminDegres)) 
+  float angleC_micro = (angleCwrite * 10.3) + 544 ; // angleC_micro est l'angle envoyé au servo avec une fonction Scoude.writeMicroseconds(). D'après les tests de calibrations effectués préalablement, le coefficient et l'offset trouvés sont les mêmes que pour le servo épaule.  
+
+  Sepaule.writeMicroseconds(angleE_micro) ;         // envoie la nouvelle position de l'épaule en microsecondes
+  Scoude.writeMicroseconds(angleC_micro) ;          // envoie la nouvelle position de d coude  en microsecondes
+  delay(50) ;                                       // laisse le temps de terminer la dernière instruction d'écriture ou déplacement
+
+}
+
+/********************************************************************************************************************************
+FONCTION HOMOTHETIE --> PERMET D'AGRANDIR OU DE DIMINUER LA TAILLE DE LA LETTRE (i.e la taille des vecteurs unitaires du repère)
+*********************************************************************************************************************************/
+float* pHomothetie(float vecteurDep[3], float rapport){
+  // matrice homothétie = k.Id
+  float MH[2][2] = {    { rapport   , 0          },
+                        { 0         ,  rapport   }   } ;
+  // application de l'homothétie au vecteurDep               
+  float vecteurArr[3] = {   MH[0][0] * vecteurDep[0] + MH[0][1] * vecteurDep[1],
+                            MH[1][0] * vecteurDep[0] + MH[1][1] * vecteurDep[1],
+                            vecteurDep[2]
+                          };
+  // création d'un pointeur pRes sur les données du vecteur résultat, coordonnée par coordonnée
+  float* pRes = new float[3];  for (int i = 0; i<3; i++){pRes[i] = vecteurArr[i];}; return pRes ;
+}
+
+/***********************************************************
+FONCTION TRANSLATION --> PERMET DE DÉCALER L'ORIGINE
+
+    --> pour initialiser le (0,0) de notre repère "feuille"
+************************************************************/
+float* pTranslation(float vecteurDep[3], float vecteurT[2]){
+  float vecteurArr[3] = { vecteurDep[0] + vecteurT[0],
+                          vecteurDep[1] + vecteurT[1],
+                          vecteurDep[2  ]
+                          } ;
+  // création d'un pointeur pRes sur les données du vecteur résultat, coordonnée par coordonnée
+  float* pRes = new float[3];  for (int i = 0; i<3; i++){ pRes[i] = vecteurArr[i]; }; return pRes ;
+}
+
+/******************************************************************************************
+FONCTION ROTATION --> PERMET DE FAIRE TOURNER LA LETTRE D'UN ANGLE (nommé angle) SOUHAITÉ
+*******************************************************************************************/
+float* pRotation(float vecteurDep[3], float angle){
+  //matrice de rotation
+  float MR[2][2] = {  { cos(angle) , -sin(angle) },
+                      { sin(angle) ,  cos(angle) }    } ;
+  // application de la rotation d'angle 'angle' en degrés au vecteurDep  
+  float vecteurArr[3] = {   MR[0][0] * vecteurDep[0] + MR[0][1] * vecteurDep[1],
+                            MR[1][0] * vecteurDep[0] + MR[1][1] * vecteurDep[1],
+                            vecteurDep[2]
+                          };
+  // création d'un pointeur pRes sur les données du vecteur résultat, coordonnée par coordonnée
+  float* pRes = new float[3];  for (int i = 0; i<3; i++){pRes[i] = vecteurArr[i];}; return pRes ;
+}
+
+/*************************************************************************************************************************************************
+FONCTION COMPTEAREBOURS --> FAIT UN COMPTE A REBOURS POUR LES BRANCHEMENTS APRES ENVOI DU CODE, DEMARRAGE
+**************************************************************************************************************************************************/
+void compteARebours(int temps){
+  for (int i = temps; i>=0; i--){Serial.println(i); delay(1000);}
+}
+
+/****************************************
+ * DETECTION MODE RETIREBOUCHON / NORMAL
+*****************************************/
+bool quelMode(){
+  pinMode(modeRetireBouchonPin,INPUT_PULLUP);
+  bool readMode ;
+  btnVal=analogRead(modeRetireBouchonPin);
+    if(btnVal<200){
+      readMode = true ;
+      Serial.println("mode => RetireBouchon");
+
+    }else{
+      readMode = false ;
+      Serial.println("mode => Ecriture");
+    }
+  return readMode ;
+}
+
+
+void printVector(float* pVecteur, String pNom){
+  Serial.print(pNom); Serial.print(" = ") ;Serial.print(pVecteur[0]) ;Serial.print(" : ");Serial.println(pVecteur[1]);
+}
+
+
+void loop(){}
